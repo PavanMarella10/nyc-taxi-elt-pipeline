@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: taxi_postgres
+    # Read credentials from your .env file.
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # host:container — connect from your laptop on localhost:5432
+      - "5432:5432"
+    volumes:
+      # Persist data so it survives container restarts.
+      - taxi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  taxi_pgdata:

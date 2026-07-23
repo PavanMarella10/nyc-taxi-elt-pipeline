@@ -1,0 +1,17 @@
+# How dbt connects to your database.
+#
+# Credentials come from environment variables with a fallback default, so this
+# file is safe to commit. Never hardcode a real password here.
+
+nyc_taxi:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      user: "{{ env_var('POSTGRES_USER', 'taxi') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'taxi') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'taxi') }}"
+      schema: analytics
+      threads: 4

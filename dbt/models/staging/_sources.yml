@@ -1,0 +1,18 @@
+version: 2
+
+# A "source" is a table dbt did NOT create — it is the raw data your load
+# script produced. Declaring it here means models reference it as
+# {{ source('raw', 'yellow_trips') }} instead of hardcoding raw.yellow_trips.
+#
+# The payoff: dbt now knows raw.yellow_trips is upstream of everything, so it
+# can draw the lineage graph and warn you what breaks if the table changes.
+
+sources:
+  - name: raw
+    description: Data landed by load.py, unchanged from the source files.
+    schema: raw
+    tables:
+      - name: yellow_trips
+        description: One row per yellow taxi trip, exactly as NYC TLC published it.
+      - name: load_audit
+        description: Which partitions were loaded and when.
