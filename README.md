@@ -189,22 +189,7 @@ Data quality is enforced with dbt tests:
 - **Freshness** — `dbt source freshness` catches the failure mode where every
   test passes but the pipeline has been dead for days
 
----
-
-## Roadmap
-
-- [x] Extraction with validation and idempotency
-- [x] Partitioned Parquet lake
-- [x] Incremental warehouse loads with audit logging
-- [x] dbt star schema with incremental fact table
-- [x] Data quality tests
-- [ ] Airflow orchestration
-- [ ] CI/CD with GitHub Actions
-- [ ] Deploy to S3 + Snowflake
-- [ ] BI dashboard
-
----
-
+  
 ## What I would change at scale
 
 Postgres is the constraint here, not the design. At 100x this volume:
