@@ -9,7 +9,6 @@ Built locally with tooling that maps directly onto its cloud equivalents
 the design.
 
 ---
-
 ## Results
 
 | Metric | Value |
