@@ -1,0 +1,84 @@
+# Airflow, running locally with the LocalExecutor.
+#
+# This is a trimmed, single-machine setup: a metadata database, a one-off init
+# job, a scheduler, and the web UI. No Celery, no Redis, no workers — those are
+# for distributed setups and add complexity you do not need to learn the ideas.
+#
+# The tasks reach your taxi Postgres (from the project's main docker-compose)
+# via host.docker.internal, which points from inside a container back to your
+# host machine.
+
+x-airflow-common: &airflow-common
+  build: .
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-metadata/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+
+    # Passed through to your scripts and to dbt so they connect to the taxi
+    # database running on the host, not to Airflow's own metadata database.
+    POSTGRES_HOST: host.docker.internal
+    POSTGRES_PORT: "5432"
+    POSTGRES_USER: taxi
+    POSTGRES_PASSWORD: taxi
+    POSTGRES_DB: taxi
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    # Mount the whole project so tasks can run your scripts and share the
+    # data/ folder with your host.
+    - ..:/opt/airflow/project
+  # Lets host.docker.internal resolve on Linux too (harmless on Windows/Mac).
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    airflow-metadata:
+      condition: service_healthy
+
+services:
+  # Airflow's own bookkeeping database. Separate from your taxi data. Not
+  # published to the host — nothing outside these containers needs it.
+  airflow-metadata:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_metadata_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+
+  # One-off job: create the metadata tables and the admin login. Run this
+  # once before starting the scheduler and webserver.
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin --password admin \
+          --firstname admin --lastname admin \
+          --role Admin --email admin@example.com
+    restart: on-failure
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: unless-stopped
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  airflow_metadata_data:

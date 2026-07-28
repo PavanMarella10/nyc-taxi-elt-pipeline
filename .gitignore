@@ -10,3 +10,6 @@ dbt/dbt_packages/
 dbt/.user.yml
 .vscode/
 .idea/
+.DS_Store
+airflow/logs/
+airflow/.env
