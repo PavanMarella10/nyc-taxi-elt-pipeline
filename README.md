@@ -1,5 +1,4 @@
 # NYC Taxi ELT Pipeline
-
 A batch data pipeline that ingests NYC yellow taxi trip records, lands them in a
 partitioned data lake, loads them into Postgres, and models them into a star
 schema with dbt.
